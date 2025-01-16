@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'Usuarios',
+                model: 'usuarios',
                 key: 'id',
             },
         },
@@ -36,7 +36,7 @@ module.exports = (sequelize, DataTypes) => {
         reemplazo_id: {
             type: DataTypes.INTEGER,
             references: {
-                model: 'Usuarios',
+                model: 'usuarios',
                 key: 'id',
             },
             allowNull: true,

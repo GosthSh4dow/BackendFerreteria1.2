@@ -19,7 +19,7 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // Modelos
-db.Categoria = require('./categoria')(sequelize, Sequelize.DataTypes);
+db.Categoria = require('./Categoria')(sequelize, Sequelize.DataTypes);
 db.Sucursal = require('./Sucursal')(sequelize, Sequelize.DataTypes);
 db.Usuario = require('./Usuario')(sequelize, Sequelize.DataTypes);
 db.Proveedor = require('./Proveedor')(sequelize, Sequelize.DataTypes);
@@ -32,8 +32,11 @@ db.DetalleVenta = require('./DetalleVenta')(sequelize, Sequelize.DataTypes);
 db.Asistencia = require('./Asistencia')(sequelize, Sequelize.DataTypes);
 db.Boleta = require('./Boleta')(sequelize, Sequelize.DataTypes);
 db.Caja = require('./Caja')(sequelize, Sequelize.DataTypes);
+db.PlantillaCotizacion = require('./PlantillaCotizacion')(sequelize,Sequelize.DataTypes);
+db.Cotizacion = require('./Cotizacion')(sequelize,Sequelize.DataTypes);
+db.CotizacionProducto = require('./CotizacionProducto')(sequelize, Sequelize.DataTypes);
 
-// Asociaciones
+
 db.Sucursal.hasMany(db.Usuario, { foreignKey: 'id_sucursal', as: 'usuarios' });
 db.Usuario.belongsTo(db.Sucursal, { foreignKey: 'id_sucursal', as: 'sucursal' });
 
@@ -76,4 +79,24 @@ db.Usuario.hasMany(db.Caja, {foreignKey:'cerrado_por',as:'cierres'});
 db.Caja.belongsTo(db.Usuario, {foreignKey:'cerrado_por',as:'usuario_cierre'});
 db.Sucursal.hasMany(db.Caja, { foreignKey: 'id_sucursal', as: 'cajas' });
 db.Caja.belongsTo(db.Sucursal, {foreignKey: 'id_sucursal',as: 'sucursal',});
+
+// PlantillaCotizacion ↔ Cotizacion
+db.PlantillaCotizacion.hasMany(db.Cotizacion, { foreignKey: 'plantillaId', as: 'cotizaciones' });
+db.Cotizacion.belongsTo(db.PlantillaCotizacion, { foreignKey: 'plantillaId', as: 'plantilla' });
+
+// Cotizacion ↔ Cliente
+db.Cliente.hasMany(db.Cotizacion, { foreignKey: 'clienteId', as: 'cotizaciones' });
+db.Cotizacion.belongsTo(db.Cliente, { foreignKey: 'clienteId', as: 'cliente' });
+
+// Cotizacion ↔ Sucursal
+db.Sucursal.hasMany(db.Cotizacion, { foreignKey: 'sucursalId', as: 'cotizaciones' });
+db.Cotizacion.belongsTo(db.Sucursal, { foreignKey: 'sucursalId', as: 'sucursal' });
+
+// Cotizacion ↔ CotizacionProducto ↔ Producto
+db.Cotizacion.hasMany(db.CotizacionProducto, { foreignKey: 'cotizacionId', as: 'productosCotizacion' });
+db.CotizacionProducto.belongsTo(db.Cotizacion, { foreignKey: 'cotizacionId', as: 'cotizacion' });
+
+db.Producto.hasMany(db.CotizacionProducto, { foreignKey: 'productoId', as: 'cotizacionesProducto' });
+db.CotizacionProducto.belongsTo(db.Producto, { foreignKey: 'productoId', as: 'producto' });
+
 module.exports = db;

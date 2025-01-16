@@ -6,7 +6,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
      
-    });
+    },  {
+      tableName: 'categoria', // Nombre explícito de la tabla
+      timestamps: true, // Manejo de createdAt y updatedAt
+  }
+  );
   
     Categoria.associate = (models) => {
       // Relación con Productos (un producto pertenece a una categoría)

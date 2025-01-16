@@ -3,6 +3,7 @@ const app = express();
 const dotenv = require('dotenv');
 const cors = require('cors');
 dotenv.config();
+const path = require('path');
 const db = require('./models'); // Importa los modelos
 const clienteRoutes = require('./routes/clientes');
 const sucursalRoutes = require('./routes/sucursales');
@@ -17,8 +18,10 @@ const cajaRoutes = require('./routes/caja');
 const boletaRoutes = require('./routes/boleta');
 const asistenciaRoutes = require('./routes/asistenciaRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const plantillaCotizacionRoutes = require('./routes/plantillaCotizacionRoutes');
+const cotizacionRoutes = require('./routes/cotizacionRoutes');
 const router = express.Router();
-const fileUpload = require('express-fileupload'); 
+
 // Middleware
 app.use(express.json());
 // Middleware
@@ -27,9 +30,15 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
 }));
-app.use(fileUpload({
-    createParentPath: true, // Crea los directorios padres si no existen
-}));
+app.use((err, req, res, next) => {
+    console.error('Middleware de manejo de errores:', err);
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({ mensaje: err.message });
+    } else if (err) {
+        return res.status(500).json({ mensaje: err.message });
+    }
+    next();
+});
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -40,7 +49,8 @@ app.get('/', (req, res) => {
 db.sequelize.sync().then(() => {
     console.log('Base de datos sincronizada');
 }).catch(err => console.log('Error al sincronizar la base de datos:', err));
-app.use('/api/uploads', express.static('uploads'));
+// Servir archivos estáticos desde la carpeta uploads
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/sucursales', sucursalRoutes);
 app.use('/api/usuarios', usuarioRoutes);
@@ -54,7 +64,8 @@ app.use('/api/cajas', cajaRoutes);
 app.use('/api/boletas', boletaRoutes);
 app.use('/api/asistencias', asistenciaRoutes);
 app.use('/api/reportes', reportRoutes);
+app.use('/api/plantillas-cotizacion', plantillaCotizacionRoutes);
+app.use('/api/cotizaciones', cotizacionRoutes);
 
-
-const PORT = process.env.PORT || 3004;
+const PORT = process.env.PORT || 3007;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
