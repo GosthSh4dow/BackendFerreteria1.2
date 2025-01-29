@@ -95,8 +95,11 @@ exports.getVentasReport = async (req, res) => {
             ingresosTotales += parseFloat(venta.monto_total);
 
             venta.detalles.forEach(detalle => {
-                costosTotales += parseFloat(detalle.producto.costo) * detalle.cantidad;
-                descuentosTotales += (parseFloat(detalle.producto.precio_venta) - parseFloat(detalle.producto.costo)) * detalle.cantidad;
+                // Verificar si detalle.producto existe, de lo contrario asignar objeto vacío con valores predeterminados
+                const producto = detalle.producto || { costo: 0, precio_venta: 0 };
+
+                costosTotales += parseFloat(producto.costo) * detalle.cantidad;
+                descuentosTotales += (parseFloat(producto.precio_venta) - parseFloat(producto.costo)) * detalle.cantidad;
             });
         });
 
@@ -151,10 +154,10 @@ exports.getVentasPorProducto = async (req, res) => {
 
         const detalles = await DetalleVenta.findAll({
             where: {
-                '$Venta.fecha$': {
+                '$venta.fecha$': {
                     [Op.between]: [startDate, endDate],
                 },
-                '$Venta.id_sucursal$': id_sucursal || { [Op.ne]: null },
+                '$venta.id_sucursal$': id_sucursal || { [Op.ne]: null },
             },
             include: [
                 {
@@ -176,11 +179,14 @@ exports.getVentasPorProducto = async (req, res) => {
         let ingresosTotales = 0;
 
         detalles.forEach(detalle => {
+            // Verificar si detalle.producto existe, de lo contrario asignar objeto vacío con valores predeterminados
+            const producto = detalle.producto || { costo: 0, precio_venta: 0 };
+
             const productoId = detalle.id_producto;
             if (!reportData[productoId]) {
                 reportData[productoId] = {
-                    nombre: detalle.producto.nombre,
-                    codigo_barras: detalle.producto.codigo_barras,
+                    nombre: producto.nombre || 'Producto no disponible',
+                    codigo_barras: producto.codigo_barras || 'N/A',
                     cantidad_vendida: 0,
                     ingresos: 0,
                     costos: 0,
@@ -189,11 +195,11 @@ exports.getVentasPorProducto = async (req, res) => {
             }
 
             reportData[productoId].cantidad_vendida += detalle.cantidad;
-            reportData[productoId].ingresos += parseFloat(detalle.precio_unitario) * detalle.cantidad;
-            reportData[productoId].costos += parseFloat(detalle.producto.costo) * detalle.cantidad;
-            reportData[productoId].utilidad += (parseFloat(detalle.precio_unitario) - parseFloat(detalle.producto.costo)) * detalle.cantidad;
+            reportData[productoId].ingresos += parseFloat(producto.precio_venta) * detalle.cantidad;
+            reportData[productoId].costos += parseFloat(producto.costo) * detalle.cantidad;
+            reportData[productoId].utilidad += (parseFloat(producto.precio_venta) - parseFloat(producto.costo)) * detalle.cantidad;
 
-            ingresosTotales += parseFloat(detalle.precio_unitario) * detalle.cantidad;
+            ingresosTotales += parseFloat(producto.precio_venta) * detalle.cantidad;
         });
 
         // Calcular porcentaje de ventas
@@ -248,6 +254,7 @@ exports.getEgresosReport = async (req, res) => {
     }
 };
 
+
 // Función para descargar el reporte en Excel
 exports.downloadVentasExcel = async (req, res) => {
     try {
@@ -272,10 +279,10 @@ exports.downloadVentasExcel = async (req, res) => {
             // Obtener ventas por producto
             const detalles = await DetalleVenta.findAll({
                 where: {
-                    '$Venta.fecha$': {
+                    '$venta.fecha$': {
                         [Op.between]: [startDate, endDate],
                     },
-                    '$Venta.id_sucursal$': id_sucursal || { [Op.ne]: null },
+                    '$venta.id_sucursal$': id_sucursal || { [Op.ne]: null },
                 },
                 include: [
                     {
@@ -421,10 +428,10 @@ exports.downloadVentasPDF = async (req, res) => {
             // Obtener ventas por producto
             const detalles = await DetalleVenta.findAll({
                 where: {
-                    '$Venta.fecha$': {
+                    '$venta.fecha$': {
                         [Op.between]: [startDate, endDate],
                     },
-                    '$Venta.id_sucursal$': id_sucursal || { [Op.ne]: null },
+                    '$venta.id_sucursal$': id_sucursal || { [Op.ne]: null },
                 },
                 include: [
                     {
